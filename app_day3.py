@@ -38,7 +38,7 @@ if st.session_state.token is None:
             data = response.json()
             st.session_state.token = data["access_token"]
             st.success("Login successful!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid credentials")
 
