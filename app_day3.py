@@ -4,9 +4,12 @@
 
 import streamlit as st
 import requests
+import os
 
 # BACKEND_URL = "http://127.0.0.1:8000" --local
-BACKEND_URL = "https://backend-1-f0fm.onrender.com"  # --remote
+#BACKEND_URL = "https://backend-1-f0fm.onrender.com"  # --remote
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
 
 st.title("Product Management Login")
 
