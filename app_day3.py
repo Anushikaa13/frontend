@@ -5,7 +5,8 @@
 import streamlit as st
 import requests
 
-BACKEND_URL = "http://127.0.0.1:8000"
+# BACKEND_URL = "http://127.0.0.1:8000" --local
+BACKEND_URL = "https://backend-1-f0fm.onrender.com"  # --remote
 
 st.title("Product Management Login")
 
