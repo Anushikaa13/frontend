@@ -29,7 +29,11 @@ if auth_mode == "Signup":
         if res.status_code == 200:
             st.sidebar.success("User created. Please login.")
         else:
-            st.sidebar.error(res.json()["detail"])
+            try:
+                error_msg = res.json().get("detail", "Signup failed")
+            except Exception as e:
+                error_msg = res.text if res.text else f"Signup failed (HTTP {res.status_code})"
+            st.sidebar.error(error_msg)
 
 if auth_mode == "Login":
     if st.sidebar.button("Login"):
@@ -38,7 +42,11 @@ if auth_mode == "Login":
             st.session_state.token = res.json()["access_token"]
             st.sidebar.success("Logged in successfully")
         else:
-            st.sidebar.error("Invalid credentials")
+            try:
+                error_msg = res.json().get("detail", "Login failed")
+            except Exception as e:
+                error_msg = res.text if res.text else "Invalid credentials"
+            st.sidebar.error(error_msg)
 
 # =========================
 # MAIN APP
@@ -93,7 +101,11 @@ with st.form("add_product"):
             st.rerun()                # refresh UI
 
         else:
-            st.error(res.text)
+            try:
+                error_msg = res.json().get("detail", res.text)
+            except:
+                error_msg = res.text or f"Error: {res.status_code}"
+            st.error(error_msg)
 
 # =========================
 # FILTERS
@@ -162,7 +174,11 @@ if not df.empty:
             fetch_products.clear()
             st.rerun()
         else:
-            st.error("Failed to delete")
+            try:
+                error_msg = res.json().get("detail", res.text)
+            except:
+                error_msg = res.text or "Failed to delete"
+            st.error(error_msg)
 
 # =========================
 # CHART

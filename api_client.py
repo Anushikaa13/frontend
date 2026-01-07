@@ -14,21 +14,41 @@ def auth_headers(token):
 
 def signup(username, password):
     """Signup new user"""
-    res = requests.post(
-        f"{API_BASE_URL}/signup",
-        json={"username": username, "password": password}
-    )
-    return res
+    try:
+        res = requests.post(
+            f"{API_BASE_URL}/signup",
+            json={"username": username, "password": password},
+            timeout=REQUEST_TIMEOUT
+        )
+        return res
+    except requests.exceptions.RequestException as e:
+        # Return a mock response object with error info
+        class ErrorResponse:
+            status_code = 500
+            text = str(e)
+            def json(self):
+                return {"detail": str(e)}
+        return ErrorResponse()
 
 
 def login(username, password):
     """Login user and get token"""
-    res = requests.post(
-        f"{API_BASE_URL}/token",
-        data={"username": username, "password": password},
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
-    )
-    return res
+    try:
+        res = requests.post(
+            f"{API_BASE_URL}/token",
+            data={"username": username, "password": password},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=REQUEST_TIMEOUT
+        )
+        return res
+    except requests.exceptions.RequestException as e:
+        # Return a mock response object with error info
+        class ErrorResponse:
+            status_code = 500
+            text = str(e)
+            def json(self):
+                return {"detail": str(e)}
+        return ErrorResponse()
 
 
 def create_product(token, name, description, price, quantity):
