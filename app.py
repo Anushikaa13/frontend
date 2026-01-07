@@ -1,28 +1,17 @@
 import streamlit as st
-import requests
 import pandas as pd
-import os
+
+from config import PAGE_TITLE, LAYOUT, CACHE_TTL, API_BASE_URL
+import api_client
 
 #----------------------Day 7 + Day 8 tasks----------------------------------------#
-# =========================
-# CONFIG
-# =========================
-#API_BASE_URL = "https://backend-1-f0fm.onrender.com" # changed to deployed URL
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
-
-st.set_page_config(page_title="Product Management App", layout="wide")
+st.set_page_config(page_title=PAGE_TITLE, layout=LAYOUT)
 
 # =========================
 # SESSION STATE
 # =========================
 if "token" not in st.session_state:
     st.session_state.token = None
-
-# =========================
-# HELPERS
-# =========================
-def auth_headers():
-    return {"Authorization": f"Bearer {st.session_state.token}"}
 
 # =========================
 # AUTH UI
@@ -36,10 +25,7 @@ password = st.sidebar.text_input("Password", type="password")
 
 if auth_mode == "Signup":
     if st.sidebar.button("Create Account"):
-        res = requests.post(
-            f"{API_BASE_URL}/signup",
-            json={"username": username, "password": password}
-        )
+        res = api_client.signup(username, password)
         if res.status_code == 200:
             st.sidebar.success("User created. Please login.")
         else:
@@ -47,11 +33,7 @@ if auth_mode == "Signup":
 
 if auth_mode == "Login":
     if st.sidebar.button("Login"):
-        res = requests.post(
-            f"{API_BASE_URL}/token",
-            data={"username": username, "password": password},
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
-        )
+        res = api_client.login(username, password)
         if res.status_code == 200:
             st.session_state.token = res.json()["access_token"]
             st.sidebar.success("Logged in successfully")
@@ -70,7 +52,7 @@ if not st.session_state.token:
 # =========================
 # FETCH PRODUCTS function
 # =========================
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=CACHE_TTL, show_spinner=False)
 def fetch_products(
 min_price,
 max_price,
@@ -80,28 +62,15 @@ skip,
 limit,
 token
 ):
- params = {
- "min_price": min_price,
- "max_price": max_price,
- "sort_by": sort_by,
- "sort_order": sort_order,
- "skip": skip,
- "limit": limit
- }
-
- headers = {
- "Authorization": f"Bearer {token}"
- }
-
- res = requests.get(
- f"{API_BASE_URL}/products",
- params=params,
- headers=headers,
- timeout=5
+ return api_client.fetch_products(
+     token,
+     min_price,
+     max_price,
+     sort_by,
+     sort_order,
+     skip,
+     limit
  )
-
- res.raise_for_status()
- return res.json()
 # =========================
 # CREATE PRODUCT
 # =========================
@@ -116,16 +85,7 @@ with st.form("add_product"):
     submitted = st.form_submit_button("Add Product")
 
     if submitted:
-        res = requests.post(
-            f"{API_BASE_URL}/products",
-            json={
-                "name": name,
-                "description": description,
-                "price": price,
-                "quantity": quantity
-            },
-            headers=auth_headers()
-        )
+        res = api_client.create_product(st.session_state.token, name, description, price, quantity)
 
         if res.status_code == 200:
             st.success("Product added successfully")
@@ -196,10 +156,7 @@ if not df.empty:
     product_id = st.selectbox("Select Product ID", df["id"].tolist())
 
     if st.button("Delete"):
-        res = requests.delete(
-            f"{API_BASE_URL}/products/{product_id}",
-            headers=auth_headers()
-        )
+        res = api_client.delete_product(st.session_state.token, product_id)
         if res.status_code == 200:
             st.success("Product deleted. Refresh page.")
             fetch_products.clear()
