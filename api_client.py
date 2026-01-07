@@ -2,7 +2,12 @@
 API Client module - Handles all backend API calls
 """
 import requests
+import logging
 from config import API_BASE_URL, REQUEST_TIMEOUT
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def auth_headers(token):
@@ -15,13 +20,16 @@ def auth_headers(token):
 def signup(username, password):
     """Signup new user"""
     try:
+        logger.info(f"Attempting signup for username: {username}")
         res = requests.post(
             f"{API_BASE_URL}/signup",
             json={"username": username, "password": password},
             timeout=REQUEST_TIMEOUT
         )
+        logger.info(f"Signup response: Status {res.status_code}")
         return res
     except requests.exceptions.RequestException as e:
+        logger.error(f"Signup request failed: {str(e)}")
         # Return a mock response object with error info
         class ErrorResponse:
             status_code = 500
@@ -34,14 +42,17 @@ def signup(username, password):
 def login(username, password):
     """Login user and get token"""
     try:
+        logger.info(f"Attempting login for username: {username}")
         res = requests.post(
             f"{API_BASE_URL}/token",
             data={"username": username, "password": password},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=REQUEST_TIMEOUT
         )
+        logger.info(f"Login response: Status {res.status_code}")
         return res
     except requests.exceptions.RequestException as e:
+        logger.error(f"Login request failed: {str(e)}")
         # Return a mock response object with error info
         class ErrorResponse:
             status_code = 500
@@ -53,9 +64,11 @@ def login(username, password):
 
 def create_product(token, name, description, price, quantity):
     """Create new product"""
-    res = requests.post(
-        f"{API_BASE_URL}/products",
-        json={
+    try:
+        logger.info(f"Creating product: {name} with price: {price}")
+        res = requests.post(
+            f"{API_BASE_URL}/products",
+            json={
             "name": name,
             "description": description,
             "price": price,
@@ -63,7 +76,16 @@ def create_product(token, name, description, price, quantity):
         },
         headers=auth_headers(token)
     )
-    return res
+        logger.info(f"Create product response: Status {res.status_code}")
+        return res
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Create product request failed: {str(e)}")
+        class ErrorResponse:
+            status_code = 500
+            text = str(e)
+            def json(self):
+                return {"detail": str(e)}
+        return ErrorResponse()
 
 
 def fetch_products(token, min_price, max_price, sort_by, sort_order, skip, limit):
@@ -92,8 +114,19 @@ def fetch_products(token, min_price, max_price, sort_by, sort_order, skip, limit
 
 def delete_product(token, product_id):
     """Delete product by ID"""
-    res = requests.delete(
-        f"{API_BASE_URL}/products/{product_id}",
-        headers=auth_headers(token)
-    )
-    return res
+    try:
+        logger.info(f"Deleting product ID: {product_id}")
+        res = requests.delete(
+            f"{API_BASE_URL}/products/{product_id}",
+            headers=auth_headers(token)
+        )
+        logger.info(f"Delete product response: Status {res.status_code}")
+        return res
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Delete product request failed: {str(e)}")
+        class ErrorResponse:
+            status_code = 500
+            text = str(e)
+            def json(self):
+                return {"detail": str(e)}
+        return ErrorResponse()

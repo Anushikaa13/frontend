@@ -1,11 +1,17 @@
 import streamlit as st
 import pandas as pd
+import logging
 
 from config import PAGE_TITLE, LAYOUT, CACHE_TTL, API_BASE_URL
 import api_client
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 #----------------------Day 7 + Day 8 tasks----------------------------------------#
 st.set_page_config(page_title=PAGE_TITLE, layout=LAYOUT)
+logger.info(f"App initialized - API Base URL: {API_BASE_URL}")
 
 # =========================
 # SESSION STATE
@@ -25,10 +31,13 @@ password = st.sidebar.text_input("Password", type="password")
 
 if auth_mode == "Signup":
     if st.sidebar.button("Create Account"):
+        logger.info(f"Signup button clicked for user: {username}")
         res = api_client.signup(username, password)
         if res.status_code == 200:
+            logger.info(f"Signup successful for user: {username}")
             st.sidebar.success("User created. Please login.")
         else:
+            logger.warning(f"Signup failed for user {username}: Status {res.status_code}")
             try:
                 error_msg = res.json().get("detail", "Signup failed")
             except Exception as e:
@@ -37,11 +46,14 @@ if auth_mode == "Signup":
 
 if auth_mode == "Login":
     if st.sidebar.button("Login"):
+        logger.info(f"Login button clicked for user: {username}")
         res = api_client.login(username, password)
         if res.status_code == 200:
             st.session_state.token = res.json()["access_token"]
+            logger.info(f"Login successful for user: {username}")
             st.sidebar.success("Logged in successfully")
         else:
+            logger.warning(f"Login failed for user {username}: Status {res.status_code}")
             try:
                 error_msg = res.json().get("detail", "Login failed")
             except Exception as e:
@@ -93,14 +105,17 @@ with st.form("add_product"):
     submitted = st.form_submit_button("Add Product")
 
     if submitted:
+        logger.info(f"Add product form submitted: {name}, price: {price}")
         res = api_client.create_product(st.session_state.token, name, description, price, quantity)
 
         if res.status_code == 200:
+            logger.info(f"Product added successfully: {name}")
             st.success("Product added successfully")
             fetch_products.clear()   # clear cache
             st.rerun()                # refresh UI
 
         else:
+            logger.error(f"Failed to add product: Status {res.status_code}")
             try:
                 error_msg = res.json().get("detail", res.text)
             except:
@@ -168,12 +183,15 @@ if not df.empty:
     product_id = st.selectbox("Select Product ID", df["id"].tolist())
 
     if st.button("Delete"):
+        logger.info(f"Delete product button clicked for ID: {product_id}")
         res = api_client.delete_product(st.session_state.token, product_id)
         if res.status_code == 200:
+            logger.info(f"Product deleted successfully: ID {product_id}")
             st.success("Product deleted. Refresh page.")
             fetch_products.clear()
             st.rerun()
         else:
+            logger.error(f"Failed to delete product ID {product_id}: Status {res.status_code}")
             try:
                 error_msg = res.json().get("detail", res.text)
             except:
