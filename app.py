@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 
+#----------------------Day 7 + Day 8 tasks----------------------------------------#
 # =========================
 # CONFIG
 # =========================
@@ -65,6 +66,41 @@ if not st.session_state.token:
     st.stop()
 
 # =========================
+# FETCH PRODUCTS function
+# =========================
+@st.cache_data(ttl=60, show_spinner=False)
+def fetch_products(
+min_price,
+max_price,
+sort_by,
+sort_order,
+skip,
+limit,
+token
+):
+ params = {
+ "min_price": min_price,
+ "max_price": max_price,
+ "sort_by": sort_by,
+ "sort_order": sort_order,
+ "skip": skip,
+ "limit": limit
+ }
+
+ headers = {
+ "Authorization": f"Bearer {token}"
+ }
+
+ res = requests.get(
+ f"{BACKEND_URL}/products",
+ params=params,
+ headers=headers,
+ timeout=5
+ )
+
+ res.raise_for_status()
+ return res.json()
+# =========================
 # CREATE PRODUCT
 # =========================
 st.subheader("➕ Add New Product")
@@ -91,6 +127,9 @@ with st.form("add_product"):
 
         if res.status_code == 200:
             st.success("Product added successfully")
+            fetch_products.clear()   # clear cache
+            st.rerun()                # refresh UI
+
         else:
             st.error(res.text)
 
@@ -110,26 +149,30 @@ with col2:
 with col3:
     sort_by = st.selectbox("Sort By", ["price", "quantity", "name"])
 
+sort_order = st.radio("Sort Order", ["asc", "desc"])
+
 # =========================
 # FETCH PRODUCTS
 # =========================
-params = {
-    "min_price": min_price,
-    "max_price": max_price,
-    "sort_by": sort_by
-}
 
-res = requests.get(
-    f"{BACKEND_URL}/products",
-    params=params,
-    headers=auth_headers()
-)
+page_size = st.selectbox("Items per page", [10, 20, 50])
+page = st.number_input("Page", min_value=0, step=1)
 
-if res.status_code != 200:
-    st.error("Failed to fetch products")
+token = st.session_state.token
+
+if token is None:
+    st.warning("Please log in first.")
     st.stop()
 
-products = res.json()
+products = fetch_products(
+min_price=min_price,
+max_price=max_price,
+sort_by=sort_by,
+sort_order=sort_order,
+skip=page * page_size,
+limit=page_size,
+token=st.session_state.token
+)
 df = pd.DataFrame(products)
 
 # =========================
@@ -157,6 +200,8 @@ if not df.empty:
         )
         if res.status_code == 200:
             st.success("Product deleted. Refresh page.")
+            fetch_products.clear()
+            st.rerun()
         else:
             st.error("Failed to delete")
 
@@ -167,3 +212,8 @@ st.subheader("Price Distribution")
 
 if not df.empty:
     st.bar_chart(df.set_index("name")["price"])
+
+if st.button("🔄 Refresh Products"):
+    fetch_products.clear()
+    st.rerun()
+
