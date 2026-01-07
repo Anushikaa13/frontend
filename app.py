@@ -1,12 +1,14 @@
 import streamlit as st
 import requests
 import pandas as pd
+import os
 
 #----------------------Day 7 + Day 8 tasks----------------------------------------#
 # =========================
 # CONFIG
 # =========================
-BACKEND_URL = "https://backend-1-f0fm.onrender.com" # changed to deployed URL 
+#API_BASE_URL = "https://backend-1-f0fm.onrender.com" # changed to deployed URL
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 st.set_page_config(page_title="Product Management App", layout="wide")
 
@@ -35,7 +37,7 @@ password = st.sidebar.text_input("Password", type="password")
 if auth_mode == "Signup":
     if st.sidebar.button("Create Account"):
         res = requests.post(
-            f"{BACKEND_URL}/signup",
+            f"{API_BASE_URL}/signup",
             json={"username": username, "password": password}
         )
         if res.status_code == 200:
@@ -46,7 +48,7 @@ if auth_mode == "Signup":
 if auth_mode == "Login":
     if st.sidebar.button("Login"):
         res = requests.post(
-            f"{BACKEND_URL}/token",
+            f"{API_BASE_URL}/token",
             data={"username": username, "password": password},
             headers={"Content-Type": "application/x-www-form-urlencoded"}
         )
@@ -92,7 +94,7 @@ token
  }
 
  res = requests.get(
- f"{BACKEND_URL}/products",
+ f"{API_BASE_URL}/products",
  params=params,
  headers=headers,
  timeout=5
@@ -115,7 +117,7 @@ with st.form("add_product"):
 
     if submitted:
         res = requests.post(
-            f"{BACKEND_URL}/products",
+            f"{API_BASE_URL}/products",
             json={
                 "name": name,
                 "description": description,
@@ -195,7 +197,7 @@ if not df.empty:
 
     if st.button("Delete"):
         res = requests.delete(
-            f"{BACKEND_URL}/products/{product_id}",
+            f"{API_BASE_URL}/products/{product_id}",
             headers=auth_headers()
         )
         if res.status_code == 200:
