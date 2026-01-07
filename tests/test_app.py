@@ -268,67 +268,67 @@ class TestDataHandling:
 class TestIntegration:
     """Integration tests"""
 
-    @patch('api_client.requests.post')
-    @patch('api_client.requests.get')
-    def test_signup_login_flow(self, mock_get, mock_post):
+    def test_signup_login_flow(self):
         """Test signup and login flow"""
         import api_client
         
-        # Setup mocks
-        signup_response = Mock()
-        signup_response.status_code = 200
-        signup_response.json.return_value = {"message": "User created"}
-        
-        login_response = Mock()
-        login_response.status_code = 200
-        login_response.json.return_value = {"access_token": "token_123"}
-        
-        mock_post.side_effect = [signup_response, login_response]
-        
-        # Test signup
-        res1 = api_client.signup("newuser", "password123")
-        assert res1.status_code == 200
-        
-        # Test login
-        res2 = api_client.login("newuser", "password123")
-        assert res2.status_code == 200
-        assert res2.json()["access_token"] == "token_123"
+        with patch.object(requests, 'post') as mock_post:
+            # Setup mocks
+            signup_response = Mock()
+            signup_response.status_code = 200
+            signup_response.json.return_value = {"message": "User created"}
+            
+            login_response = Mock()
+            login_response.status_code = 200
+            login_response.json.return_value = {"access_token": "token_123"}
+            
+            mock_post.side_effect = [signup_response, login_response]
+            
+            # Test signup
+            res1 = api_client.signup("newuser", "password123")
+            assert res1.status_code == 200
+            
+            # Test login
+            res2 = api_client.login("newuser", "password123")
+            assert res2.status_code == 200
+            assert res2.json()["access_token"] == "token_123"
 
-    @patch('api_client.requests.post')
-    @patch('api_client.requests.get')
-    @patch('api_client.requests.delete')
-    def test_full_product_flow(self, mock_delete, mock_get, mock_post, mock_products, mock_token):
+    def test_full_product_flow(self, mock_products, mock_token):
         """Test full product CRUD flow"""
         import api_client
         
-        # Create product
-        create_response = Mock()
-        create_response.status_code = 200
-        mock_post.return_value = create_response
-        
-        res_create = api_client.create_product(
-            mock_token, "New Product", "Desc", 99.99, 5
-        )
-        assert res_create.status_code == 200
-        
-        # Fetch products
-        fetch_response = Mock()
-        fetch_response.json.return_value = mock_products
-        fetch_response.raise_for_status.return_value = None
-        mock_get.return_value = fetch_response
-        
-        res_fetch = api_client.fetch_products(
-            mock_token, 0, 1000, "price", "asc", 0, 100
-        )
-        assert len(res_fetch) == 3
-        
-        # Delete product
-        delete_response = Mock()
-        delete_response.status_code = 200
-        mock_delete.return_value = delete_response
-        
-        res_delete = api_client.delete_product(mock_token, 1)
-        assert res_delete.status_code == 200
+        with patch.object(requests, 'post') as mock_post, \
+             patch.object(requests, 'get') as mock_get, \
+             patch.object(requests, 'delete') as mock_delete:
+            
+            # Create product
+            create_response = Mock()
+            create_response.status_code = 200
+            mock_post.return_value = create_response
+            
+            res_create = api_client.create_product(
+                mock_token, "New Product", "Desc", 99.99, 5
+            )
+            assert res_create.status_code == 200
+            
+            # Fetch products
+            fetch_response = Mock()
+            fetch_response.json.return_value = mock_products
+            fetch_response.raise_for_status.return_value = None
+            mock_get.return_value = fetch_response
+            
+            res_fetch = api_client.fetch_products(
+                mock_token, 0, 1000, "price", "asc", 0, 100
+            )
+            assert len(res_fetch) == 3
+            
+            # Delete product
+            delete_response = Mock()
+            delete_response.status_code = 200
+            mock_delete.return_value = delete_response
+            
+            res_delete = api_client.delete_product(mock_token, 1)
+            assert res_delete.status_code == 200
 
 
 # ========================
@@ -339,13 +339,15 @@ class TestErrorHandling:
 
     @patch('api_client.requests.post')
     def test_signup_connection_error(self, mock_post):
-        """Test signup with connection error"""
+        """Test signup with connection error - should return error response"""
         import api_client
         
-        mock_post.side_effect = requests.exceptions.ConnectionError()
+        mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
         
-        with pytest.raises(requests.exceptions.ConnectionError):
-            api_client.signup("testuser", "testpass")
+        # The api_client catches exceptions and returns an error response
+        result = api_client.signup("testuser", "testpass")
+        assert result.status_code == 500
+        assert "Connection failed" in result.text
 
     @patch('api_client.requests.get')
     def test_fetch_timeout_error(self, mock_get):

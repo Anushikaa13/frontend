@@ -12,9 +12,13 @@ import os
 def run_command(cmd, description):
     """Run a shell command and report results"""
     print(f"\n{'='*60}")
-    print(f"► {description}")
+    print(f">>> {description}")
     print(f"{'='*60}")
     print(f"Command: {cmd}\n")
+    
+    # If cmd starts with pytest, use python -m pytest instead
+    if cmd.startswith("pytest"):
+        cmd = "python -m " + cmd
     
     result = subprocess.run(cmd, shell=True)
     return result.returncode == 0
@@ -39,9 +43,9 @@ def main():
         "Running all tests"
     ):
         tests_passed += 1
-        print("✅ All tests passed!")
+        print("All tests passed!")
     else:
-        print("❌ Some tests failed")
+        print(" Some tests failed")
     
     # Test 2: Run tests with coverage
     tests_total += 1
@@ -50,9 +54,9 @@ def main():
         "Running tests with coverage"
     ):
         tests_passed += 1
-        print("✅ Coverage report generated!")
+        print(" Coverage report generated!")
     else:
-        print("⚠️  Coverage report not available")
+        print(" Coverage report not available")
     
     # Test 3: Run API client tests only
     tests_total += 1
@@ -61,9 +65,9 @@ def main():
         "Running API client tests"
     ):
         tests_passed += 1
-        print("✅ API client tests passed!")
+        print(" API client tests passed!")
     else:
-        print("❌ API client tests failed")
+        print(" API client tests failed")
     
     # Test 4: Run config tests
     tests_total += 1
@@ -72,9 +76,9 @@ def main():
         "Running configuration tests"
     ):
         tests_passed += 1
-        print("✅ Configuration tests passed!")
+        print(" Configuration tests passed!")
     else:
-        print("❌ Configuration tests failed")
+        print(" Configuration tests failed")
     
     # Test 5: Run integration tests
     tests_total += 1
@@ -83,9 +87,9 @@ def main():
         "Running integration tests"
     ):
         tests_passed += 1
-        print("✅ Integration tests passed!")
+        print(" Integration tests passed!")
     else:
-        print("❌ Integration tests failed")
+        print(" Integration tests failed")
     
     # Final summary
     print(f"\n{'='*60}")
