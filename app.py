@@ -6,7 +6,7 @@ import pandas as pd
 # =========================
 # CONFIG
 # =========================
-BACKEND_URL = "http://127.0.0.1:8000" # change to deployed URL later
+BACKEND_URL = "https://backend-1-f0fm.onrender.com" # changed to deployed URL 
 
 st.set_page_config(page_title="Product Management App", layout="wide")
 
