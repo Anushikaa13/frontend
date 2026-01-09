@@ -1,5 +1,10 @@
-streamlit
-requests
-pandas
-pytest
-pytest-mock
+streamlit==1.28.1
+pandas==2.0.3
+requests==2.31.0
+plotly==5.17.0
+folium==0.14.0
+streamlit-folium==0.15.1
+streamlit-option-menu==0.3.2
+streamlit-extras==0.3.0
+pytest==9.0.2
+pytest-mock==3.12.0
